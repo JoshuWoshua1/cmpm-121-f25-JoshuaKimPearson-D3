@@ -45,8 +45,8 @@ Key gameplay challenge: Can players collect and craft tokens from nearby locatio
 - [x] Implement the victory condition: Detect when the player has crafted a token of the target value
 
 - **Polish & Finalization**
-- [ ] Do a final code review to check for code quality , preparing for a cleanup-only commit.
-- [ ] Commit all changes and mark the milestone complete.
+- [x] Do a final code review to check for code quality , preparing for a cleanup-only commit.
+- [x] Commit all changes and mark the milestone complete.
 
 ## D3.b: Globe-spanning gameplay
 

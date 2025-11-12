@@ -55,7 +55,7 @@ const statusPanelDiv = document.createElement("div");
 statusPanelDiv.id = "statusPanel";
 document.body.append(statusPanelDiv);
 
-// Create the map and set fixed view ([x] Put a basic Leaflet map on the screen.)
+// Create the map and set fixed view
 const map = leaflet.map(mapDiv, {
   center: CLASSROOM_LATLNG,
   zoom: GAMEPLAY_ZOOM_LEVEL,
@@ -74,7 +74,7 @@ leaflet
   })
   .addTo(map);
 
-// Player Marker ([x] Draw the player's location on the map.)
+// Player Marker (fixed location for D3.a)
 const playerMarker = leaflet.marker(CLASSROOM_LATLNG, {
   icon: leaflet.divIcon({
     className: "player-icon",
@@ -144,6 +144,33 @@ const cellContents = new Map<string, Token | null>();
 // A single layer group for drawing the grid (so we can clear/redraw easily)
 const gridLayer = leaflet.layerGroup().addTo(map);
 
+// Cache for token label icons to avoid recreating DOM nodes on each redraw
+const iconCache = new Map<string, leaflet.DivIcon>();
+
+// Safety clamp for maximum number of cells drawn from map bounds
+const SAFETY_RANGE = 200; // maximum number of cells in each direction from player
+
+/**
+ * Create or reuse a token label icon for the given value and proximity.
+ */
+function createTokenLabel(value: number, isNearby: boolean): leaflet.DivIcon {
+  const key = `${value}|${isNearby}`;
+  const cached = iconCache.get(key);
+  if (cached) return cached;
+
+  const html = `<div style="color: ${
+    isNearby ? "white" : "#1F2937"
+  }; text-shadow: 0 0 3px black;">${value}</div>`;
+  const icon = leaflet.divIcon({
+    className: "token-label",
+    html,
+    iconSize: [20, 20],
+    iconAnchor: [10, 10],
+  });
+  iconCache.set(key, icon);
+  return icon;
+}
+
 /**
  * Updates the state of the player's inventory display.
  */
@@ -166,7 +193,7 @@ function updateInventoryDisplay() {
 
 /**
  * The main game logic handler when a cell is clicked.
- * Only implements the nearby check ([x]) and event listener setup ([x]).
+ * Implements collection, crafting, and placement mechanics.
  */
 function handleCellClick(i: number, j: number) {
   const cellKey = `${i},${j}`;
@@ -179,7 +206,7 @@ function handleCellClick(i: number, j: number) {
   const iPlayer = playerCell[0];
   const jPlayer = playerCell[1];
 
-  // 1. Check Interaction Range relative to player ([x] Implement logic to determine if a cell is nearby for interaction)
+  // 1. Check Interaction Range relative to player
   if (
     Math.abs(i - iPlayer) > INTERACTION_RANGE ||
     Math.abs(j - jPlayer) > INTERACTION_RANGE
@@ -226,9 +253,9 @@ function handleCellClick(i: number, j: number) {
 
 /**
  * Draws or updates the entire grid of cells around the player.
- * ([x] Use the coordinate conversion function and loops to draw a whole grid of cells on the map...)
- * ([x] Ensure cells are visible to the edge of the map, simulating a world full of cells.)
- * ([x] Render the contents of the cell using text or graphics.)
+ * Uses the coordinate conversion function and loops to draw a grid of cells
+ * around the player's fixed location. Cell contents are rendered as text
+ * labels so token values are visible without clicking.
  */
 function drawGrid() {
   // Clear previous grid drawing layers
@@ -238,9 +265,30 @@ function drawGrid() {
   const iPlayer = playerCell[0];
   const jPlayer = playerCell[1];
 
-  // Use VISIBLE_RANGE for the bounds of the loop.
-  for (let i = iPlayer - VISIBLE_RANGE; i < iPlayer + VISIBLE_RANGE; i++) {
-    for (let j = jPlayer - VISIBLE_RANGE; j < jPlayer + VISIBLE_RANGE; j++) {
+  // Compute cell bounds from current map view to only draw visible cells
+  const bounds = map.getBounds();
+  const sw = bounds.getSouthWest();
+  const ne = bounds.getNorthEast();
+
+  let minI = Math.floor((sw.lat - CLASSROOM_LATLNG.lat) / TILE_DEGREES);
+  let maxI = Math.floor((ne.lat - CLASSROOM_LATLNG.lat) / TILE_DEGREES);
+  let minJ = Math.floor((sw.lng - CLASSROOM_LATLNG.lng) / TILE_DEGREES);
+  let maxJ = Math.floor((ne.lng - CLASSROOM_LATLNG.lng) / TILE_DEGREES);
+
+  // Clamp to a safety range around the player to avoid accidental huge loops
+  minI = Math.max(minI, iPlayer - SAFETY_RANGE);
+  maxI = Math.min(maxI, iPlayer + SAFETY_RANGE);
+  minJ = Math.max(minJ, jPlayer - SAFETY_RANGE);
+  maxJ = Math.min(maxJ, jPlayer + SAFETY_RANGE);
+
+  // Also ensure we draw at least a small neighborhood if bounds are tiny
+  minI = Math.min(minI, iPlayer - VISIBLE_RANGE);
+  maxI = Math.max(maxI, iPlayer + VISIBLE_RANGE);
+  minJ = Math.min(minJ, jPlayer - VISIBLE_RANGE);
+  maxJ = Math.max(maxJ, jPlayer + VISIBLE_RANGE);
+
+  for (let i = minI; i <= maxI; i++) {
+    for (let j = minJ; j <= maxJ; j++) {
       const cellKey = `${i},${j}`;
       // Read from the local cache
       let token: Token | null = cellContents.get(cellKey) ?? null;
@@ -279,19 +327,13 @@ function drawGrid() {
 
       // Add the token value as a label in the center
       if (token) {
-        const label = leaflet.divIcon({
-          className: "token-label",
-          html: `<div style="color: ${
-            isNearby ? "white" : "#1F2937"
-          }; text-shadow: 0 0 3px black;">${token.value}</div>`,
-          iconSize: [20, 20],
-          iconAnchor: [10, 10],
-        });
-        leaflet.marker(bounds.getCenter(), { icon: label, interactive: false })
-          .addTo(gridLayer);
+        const icon = createTokenLabel(token.value, isNearby);
+        leaflet.marker(bounds.getCenter(), { icon, interactive: false }).addTo(
+          gridLayer,
+        );
       }
 
-      // Click Handler to enable interaction ([x] Set up an event listener)
+      // Click handler to enable interaction
       rect.on("click", () => {
         handleCellClick(i, j);
       });
