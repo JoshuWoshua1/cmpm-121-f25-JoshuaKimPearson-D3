@@ -25,21 +25,21 @@ Key gameplay challenge: Can players collect and craft tokens from nearby locatio
 - [x] Delete everything in main.ts.
 - [x] Put a basic Leaflet map on the screen.
 - [x] Draw the player's location on the map.
-- [ ] Implement the deterministic hashing mechanism to decide if a grid cell contains a token.
-- [ ] Create a function to convert latitude/longitude into a grid cell identifier.
+- [x] Implement the deterministic hashing mechanism to decide if a grid cell contains a token.
+- [x] Create a function to convert latitude/longitude into a grid cell identifier.
 
 - **Grid Cell Rendering**
-- [ ] Use the coordinate conversion function and loops to draw a whole grid of cells on the map around the player.
-- [ ] Ensure cells are visible to the edge of the map, simulating a world full of cells.
-- [ ] Render the contents of the cell using text or graphics.
+- [x] Use the coordinate conversion function and loops to draw a whole grid of cells on the map around the player.
+- [x] Ensure cells are visible to the edge of the map, simulating a world full of cells.
+- [x] Render the contents of the cell using text or graphics.
 
 - **Inventory & Interaction**
 - [ ] Implement a data structure to track the player's held token.
 - [ ] Clearly display the held token's state/value on the screen.
-- [ ] Implement logic to determine if a cell is nearby for interaction.
+- [x] Implement logic to determine if a cell is nearby for interaction.
 
 - **Core Mechanics (Click Handling)**
-- [ ] Set up an event listener so cells can be clicked to exercise game mechanics.
+- [x] Set up an event listener so cells can be clicked to exercise game mechanics.
 - [ ] Implement collection: If a nearby cell has a token, and the player is not holding one, clicking it removes the token from the cell and places it in the player's hand.
 - [ ] Implement crafting: If the player is holding a token, and a nearby cell has a token of equal value, clicking the cell should remove both tokens and place a single new token of **double the value** into the cell. The player's hand becomes empty.
 - [ ] Implement the victory condition: Detect when the player has crafted a token of the target value
