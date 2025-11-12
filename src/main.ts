@@ -19,8 +19,9 @@ interface Token {
   value: number; // Token value (e.g., 1, 2, 4, 8)
 }
 
-// Player State (Declared but currently unused as per unchecked steps)
-const WIN_VALUE = 16;
+// Player State
+let playerToken: Token | null = null; // What the player is currently holding
+const WIN_VALUE = 16; // The value required for victory (e.g., 8 or 16)
 
 // Map Coordinates for the Classroom (fixed player location for D3.a)
 const CLASSROOM_LATLNG = leaflet.latLng(
@@ -41,8 +42,8 @@ const controlPanelDiv = document.createElement("div");
 controlPanelDiv.id = "controlPanel";
 controlPanelDiv.innerHTML = `
     <h2>World of Bits</h2>
-    <div id="playerInventory">Inventory: (Not tracked yet)</div>
-    <div id="gameStatus">Goal: Craft a token of value ${WIN_VALUE}. (Not implemented yet)</div>
+    <div id="playerInventory">Inventory: Empty</div>
+    <div id="gameStatus">Goal: Craft a token of value ${WIN_VALUE}.</div>
 `;
 document.body.append(controlPanelDiv);
 
@@ -89,7 +90,8 @@ playerMarker.addTo(map);
 
 /**
  * Converts a LatLng coordinate to the top-left corner of its cell identifier (i, j).
- * ([x] Create a function to convert latitude/longitude into a grid cell identifier.)
+ * @param latlng - The latitude/longitude coordinate.
+ * @returns An array [i, j] representing the cell coordinates.
  */
 function getCellId(latlng: LatLng): [number, number] {
   // Relative position from the origin (classroom) in degrees
@@ -105,6 +107,8 @@ function getCellId(latlng: LatLng): [number, number] {
 
 /**
  * Calculates the bounding box for a given cell (i, j).
+ * @param i - The latitude index.
+ * @param j - The longitude index.
  * @returns A LatLngBounds object for the cell.
  */
 function getCellBounds(i: number, j: number): leaflet.LatLngBounds {
@@ -118,7 +122,9 @@ function getCellBounds(i: number, j: number): leaflet.LatLngBounds {
 
 /**
  * Determines the initial token value for a cell using the deterministic luck function.
- * ([x] Implement the deterministic hashing mechanism to decide if a grid cell contains a token.)
+ * @param i - The latitude index.
+ * @param j - The longitude index.
+ * @returns A Token object or null if the cell is empty.
  */
 function getInitialCellToken(i: number, j: number): Token | null {
   // Seed the luck function with the cell's fixed coordinates
@@ -130,7 +136,7 @@ function getInitialCellToken(i: number, j: number): Token | null {
   return null;
 }
 
-// ----------------- GAME STATE (LOCAL ONLY) --------------------
+// ----------------- GAME STATE FOR D3.a --------------------
 
 // Map of cell ID (string 'i,j') to its current Token.
 const cellContents = new Map<string, Token | null>();
@@ -140,12 +146,21 @@ const gridLayer = leaflet.layerGroup().addTo(map);
 
 /**
  * Updates the state of the player's inventory display.
- * (Placeholder function to avoid errors, matching [ ] state.)
  */
 function updateInventoryDisplay() {
   const inventoryDiv = document.getElementById("playerInventory");
   if (inventoryDiv) {
-    inventoryDiv.innerHTML = "Inventory: (Not tracked yet)";
+    if (playerToken) {
+      inventoryDiv.innerHTML =
+        `Inventory: <span class="token-value">${playerToken.value}</span>`;
+      if (playerToken.value >= WIN_VALUE) {
+        document.getElementById("gameStatus")!.innerHTML =
+          `<h3>VICTORY! Token of value ${WIN_VALUE} crafted!</h3>`;
+        document.getElementById("gameStatus")!.classList.add("win");
+      }
+    } else {
+      inventoryDiv.innerHTML = "Inventory: Empty";
+    }
   }
 }
 
@@ -155,6 +170,9 @@ function updateInventoryDisplay() {
  */
 function handleCellClick(i: number, j: number) {
   const cellKey = `${i},${j}`;
+
+  // Re-evaluate current token for the cell (in case it's changed since draw)
+  const cellToken = cellContents.get(cellKey) ?? null;
 
   // Player's cell index
   const playerCell = getCellId(CLASSROOM_LATLNG);
@@ -171,9 +189,39 @@ function handleCellClick(i: number, j: number) {
     return;
   }
 
-  // Core mechanics are not yet implemented.
-  statusPanelDiv.innerHTML =
-    `Cell ${cellKey} is nearby and ready for interaction. Core mechanics are not yet implemented.`;
+  // ------------ COLLECTION MECHANIC -----------------
+  if (!playerToken && cellToken) {
+    // Player is empty, cell has token -> COLLECT
+    playerToken = cellToken;
+    cellContents.set(cellKey, null); // Remove token from cell
+    statusPanelDiv.innerHTML =
+      `Collected token value ${playerToken.value} from cell ${cellKey}.`;
+  } // -------------------- CRAFTING MECHANIC ------------------------
+  else if (playerToken && cellToken && playerToken.value === cellToken.value) {
+    // Player has token, cell has EQUAL token -> CRAFT
+    const newValue = playerToken.value * 2;
+    cellContents.set(cellKey, { value: newValue }); // Place new token in cell
+    playerToken = null; // Clear player inventory
+    statusPanelDiv.innerHTML =
+      `Crafted new token value ${newValue} in cell ${cellKey}!`;
+  } // -------------------- PLACEMENT (No match, just placing an inventory token) ------------------------
+  else if (playerToken && !cellToken) {
+    // Player has token, cell is empty -> PLACE (or drop)
+    cellContents.set(cellKey, playerToken);
+    playerToken = null;
+    statusPanelDiv.innerHTML = `Placed token value ${
+      cellContents.get(cellKey)?.value
+    } into cell ${cellKey}.`;
+  } // -------------------- INVALID ACTION ---------------------
+  else {
+    // Player has token, cell has UNEQUAL token, or both empty/both full (should be handled by crafting/collection)
+    statusPanelDiv.innerHTML =
+      `Cannot interact with cell ${cellKey}. Token values must match for crafting, or cell must be empty/full for placing/collecting.`;
+  }
+
+  // Redraw everything after state change
+  updateInventoryDisplay();
+  drawGrid();
 }
 
 /**
@@ -229,7 +277,7 @@ function drawGrid() {
 
       rect.addTo(gridLayer);
 
-      // Render the contents of the cell using text (token value)
+      // Add the token value as a label in the center
       if (token) {
         const label = leaflet.divIcon({
           className: "token-label",
@@ -264,4 +312,4 @@ map.on("moveend", () => {
 });
 
 statusPanelDiv.innerHTML =
-  "Welcome to the World of Bits! Click a nearby cell to test the interaction range.";
+  "Welcome to the World of Bits! Start collecting tokens of value 1 near you.";

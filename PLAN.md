@@ -34,15 +34,15 @@ Key gameplay challenge: Can players collect and craft tokens from nearby locatio
 - [x] Render the contents of the cell using text or graphics.
 
 - **Inventory & Interaction**
-- [ ] Implement a data structure to track the player's held token.
-- [ ] Clearly display the held token's state/value on the screen.
+- [x] Implement a data structure to track the player's held token.
+- [x] Clearly display the held token's state/value on the screen.
 - [x] Implement logic to determine if a cell is nearby for interaction.
 
 - **Core Mechanics (Click Handling)**
 - [x] Set up an event listener so cells can be clicked to exercise game mechanics.
-- [ ] Implement collection: If a nearby cell has a token, and the player is not holding one, clicking it removes the token from the cell and places it in the player's hand.
-- [ ] Implement crafting: If the player is holding a token, and a nearby cell has a token of equal value, clicking the cell should remove both tokens and place a single new token of **double the value** into the cell. The player's hand becomes empty.
-- [ ] Implement the victory condition: Detect when the player has crafted a token of the target value
+- [x] Implement collection: If a nearby cell has a token, and the player is not holding one, clicking it removes the token from the cell and places it in the player's hand.
+- [x] Implement crafting: If the player is holding a token, and a nearby cell has a token of equal value, clicking the cell should remove both tokens and place a single new token of **double the value** into the cell. The player's hand becomes empty.
+- [x] Implement the victory condition: Detect when the player has crafted a token of the target value
 
 - **Polish & Finalization**
 - [ ] Do a final code review to check for code quality , preparing for a cleanup-only commit.
