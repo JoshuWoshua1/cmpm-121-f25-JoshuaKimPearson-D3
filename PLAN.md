@@ -50,6 +50,41 @@ Key gameplay challenge: Can players collect and craft tokens from nearby locatio
 
 ## D3.b: Globe-spanning gameplay
 
+Key technical challenge: Can you set up your implementation to support gameplay anywhere in the real world, not just locations near our classroom?
+Key gameplay challenge: Can players craft an even higher value token by moving to other locations to get access to additional crafting materials?
+
 ### D3.b Steps
 
-Haven't planned out D3b yet
+- **Movement Setup**
+- [ ] Introduce a new state variable (`playerLatLng`) to track the player's true location, initialized to `CLASSROOM_LATLNG`.
+- [ ] Update `playerMarker` and `map.center` to use `playerLatLng` instead of the fixed `CLASSROOM_LATLNG` constant.
+- [ ] Add North, South, East, and West buttons to the `controlPanelDiv` to simulate movement (e.g., move by one `TILE_DEGREES`).
+- [ ] Implement click handlers for movement buttons that update `playerLatLng` and then trigger `drawGrid()` and update the map center.
+
+- **World-Anchored Coordinates (Null Island)**
+- [ ] Change the basis of coordinate calculations: modify `getCellId` and `getCellBounds` to use **Null Island (0, 0) as the true origin**, rather than `CLASSROOM_LATLNG`.
+- _Tip: This is a major refactor of Section 3 to ensure the grid is globally consistent._
+- [ ] Verify that `luck` uses the new Null Island-based `i, j` coordinates for its seed to maintain global consistency.
+
+- **Dynamic Map View**
+- [ ] Update `drawGrid` to center the drawing loop (`VISIBLE_RANGE`) around the current cell of `playerLatLng` (i.e., around `iPlayer`, `jPlayer`).
+- [ ] Ensure the player marker moves to `playerLatLng` when the map is moved by button clicks.
+- [ ] **Crucial for D3.b Gameplay:** When `drawGrid` runs, implement the "memoryless" cell requirement by **NOT** using the `cellContents` map to restore state. Instead, only check `getInitialCellToken`.
+- _This creates the intentional farming bug, which will be fixed in D3.c._
+
+- **Interaction Refinement**
+- [ ] Modify `handleCellClick` to calculate the proximity check based on the current cell of `playerLatLng` (`iPlayer`, `jPlayer`). The range check should be relative to the player's _new_ position.
+- **Gameplay Progression**
+
+- [ ] Increase `WIN_VALUE` (e.g., from 16 to 64 or 128) to require movement and farming to achieve victory.
+- [ ] Test the farming exploit: confirm the player can move out of range, move back, and see a freshly spawned token in a cell they previously emptied.
+
+- **Polish & Finalization**
+- [ ] Do a final code review and cleanup (preparing for a cleanup-only commit).
+- [ ] Commit all changes and mark the milestone complete (e.g., `(D3.b complete)`).
+
+## D3.c Object persistence
+
+### D3.c Steps
+
+Will create later.
