@@ -67,15 +67,15 @@ Key gameplay challenge: Can players craft an even higher value token by moving t
 - [x] Verify that `luck` uses the new Null Island-based `i, j` coordinates for its seed to maintain global consistency.
 
 - **Dynamic Map View**
-- [ ] Update `drawGrid` to center the drawing loop (`VISIBLE_RANGE`) around the current cell of `playerLatLng` (i.e., around `iPlayer`, `jPlayer`).
-- [ ] Ensure the player marker moves to `playerLatLng` when the map is moved by button clicks.
-- [ ] **Crucial for D3.b Gameplay:** When `drawGrid` runs, implement the "memoryless" cell requirement by **NOT** using the `cellContents` map to restore state. Instead, only check `getInitialCellToken`.
+- [x] Update `drawGrid` to center the drawing loop (`VISIBLE_RANGE`) around the current cell of `playerLatLng` (i.e., around `iPlayer`, `jPlayer`).
+- [x] Ensure the player marker moves to `playerLatLng` when the map is moved by button clicks.
+- [x] **Crucial for D3.b Gameplay:** When `drawGrid` runs, implement the "memoryless" cell requirement by **NOT** using the `cellContents` map to restore state. Instead, only check `getInitialCellToken`.
 - _This creates the intentional farming bug, which will be fixed in D3.c._
 
 - **Interaction Refinement**
-- [ ] Modify `handleCellClick` to calculate the proximity check based on the current cell of `playerLatLng` (`iPlayer`, `jPlayer`). The range check should be relative to the player's _new_ position.
-- **Gameplay Progression**
+- [x] Modify `handleCellClick` to calculate the proximity check based on the current cell of `playerLatLng` (`iPlayer`, `jPlayer`). The range check should be relative to the player's _new_ position.
 
+- **Gameplay Progression**
 - [ ] Increase `WIN_VALUE` (e.g., from 16 to 64 or 128) to require movement and farming to achieve victory.
 - [ ] Test the farming exploit: confirm the player can move out of range, move back, and see a freshly spawned token in a cell they previously emptied.
 

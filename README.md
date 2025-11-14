@@ -33,4 +33,4 @@ Technical notes:
 
 - **2025-11-13** — Stopped `CLASSROOM_LATLNG` from being the same as the player location and added buttons for the four cardinal directions so that the player may move to collect and craft higher tokens. The map also centers around `playerLatLng` instead of `CLASSROOM_LATLNG` making it easier to track where you are without constantly scrolling the map.
 
-- **2025-11-14** — Changed basis to use the true origin (0, 0) instead of the classroom.
+- **2025-11-14** — Changed basis to use the true origin (0, 0) instead of the classroom. Removed old futureproofing in order to properly implement a dynamic map view that can also have the farming bug. Memoryless cells have also been implemented by avoiding restoring points with `cellContents`.

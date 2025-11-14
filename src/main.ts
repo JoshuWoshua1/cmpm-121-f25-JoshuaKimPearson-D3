@@ -170,8 +170,8 @@ const gridLayer = leaflet.layerGroup().addTo(map);
 // Cache for token label icons to avoid recreating DOM nodes on each redraw
 const iconCache = new Map<string, leaflet.DivIcon>();
 
-// Safety clamp for maximum number of cells drawn from map bounds
-const SAFETY_RANGE = 200; // maximum number of cells in each direction from player
+// Safety clamp for maximum number of cells drawn from map bounds (unused for now)
+const _SAFETY_RANGE = 200; // maximum number of cells in each direction from player
 
 /**
  * Create or reuse a token label icon for the given value and proximity.
@@ -288,40 +288,16 @@ function drawGrid() {
   const iPlayer = playerCell[0];
   const jPlayer = playerCell[1];
 
-  // Compute cell bounds from current map view to only draw visible cells
-  const bounds = map.getBounds();
-  const sw = bounds.getSouthWest();
-  const ne = bounds.getNorthEast();
-
-  // Compute i/j ranges directly from absolute lat/lng using Null Island as origin
-  let minI = Math.floor(sw.lat / TILE_DEGREES);
-  let maxI = Math.floor(ne.lat / TILE_DEGREES);
-  let minJ = Math.floor(sw.lng / TILE_DEGREES);
-  let maxJ = Math.floor(ne.lng / TILE_DEGREES);
-
-  // Clamp to a safety range around the player to avoid accidental huge loops
-  minI = Math.max(minI, iPlayer - SAFETY_RANGE);
-  maxI = Math.min(maxI, iPlayer + SAFETY_RANGE);
-  minJ = Math.max(minJ, jPlayer - SAFETY_RANGE);
-  maxJ = Math.min(maxJ, jPlayer + SAFETY_RANGE);
-
-  // Also ensure we draw at least a small neighborhood if bounds are tiny
-  minI = Math.min(minI, iPlayer - VISIBLE_RANGE);
-  maxI = Math.max(maxI, iPlayer + VISIBLE_RANGE);
-  minJ = Math.min(minJ, jPlayer - VISIBLE_RANGE);
-  maxJ = Math.max(maxJ, jPlayer + VISIBLE_RANGE);
+  // [Dynamic Map View] Center the drawing loop around iPlayer and jPlayer using VISIBLE_RANGE
+  const minI = iPlayer - VISIBLE_RANGE;
+  const maxI = iPlayer + VISIBLE_RANGE;
+  const minJ = jPlayer - VISIBLE_RANGE;
+  const maxJ = jPlayer + VISIBLE_RANGE;
 
   for (let i = minI; i <= maxI; i++) {
     for (let j = minJ; j <= maxJ; j++) {
-      const cellKey = `${i},${j}`;
-      // Read from the local cache
-      let token: Token | null = cellContents.get(cellKey) ?? null;
-
-      // Deterministic Initialization logic
-      if (!cellContents.has(cellKey)) {
-        token = getInitialCellToken(i, j);
-        cellContents.set(cellKey, token); // Cache the initial deterministic state
-      }
+      // [D3.b Memoryless] Only check getInitialCellToken.
+      const token: Token | null = getInitialCellToken(i, j);
 
       const bounds = getCellBounds(i, j);
       const rect = leaflet.rectangle(bounds);
