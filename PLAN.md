@@ -62,9 +62,9 @@ Key gameplay challenge: Can players craft an even higher value token by moving t
 - [x] Implement click handlers for movement buttons that update `playerLatLng` and then trigger `drawGrid()` and update the map center.
 
 - **World-Anchored Coordinates (Null Island)**
-- [ ] Change the basis of coordinate calculations: modify `getCellId` and `getCellBounds` to use **Null Island (0, 0) as the true origin**, rather than `CLASSROOM_LATLNG`.
+- [x] Change the basis of coordinate calculations: modify `getCellId` and `getCellBounds` to use **Null Island (0, 0) as the true origin**, rather than `CLASSROOM_LATLNG`.
 - _Tip: This is a major refactor of Section 3 to ensure the grid is globally consistent._
-- [ ] Verify that `luck` uses the new Null Island-based `i, j` coordinates for its seed to maintain global consistency.
+- [x] Verify that `luck` uses the new Null Island-based `i, j` coordinates for its seed to maintain global consistency.
 
 - **Dynamic Map View**
 - [ ] Update `drawGrid` to center the drawing loop (`VISIBLE_RANGE`) around the current cell of `playerLatLng` (i.e., around `iPlayer`, `jPlayer`).

@@ -24,7 +24,7 @@ let playerToken: Token | null = null; // What the player is currently holding
 const WIN_VALUE = 16; // The value required for victory (e.g., 8 or 16)
 
 // Map Coordinates for the Classroom (origin reference point)
-const CLASSROOM_LATLNG = leaflet.latLng(
+const _CLASSROOM_LATLNG = leaflet.latLng(
   36.997936938057016,
   -122.05703507501151,
 );
@@ -119,13 +119,10 @@ function movePlayer(newLatLng: LatLng) {
  * @returns An array [i, j] representing the cell coordinates.
  */
 function getCellId(latlng: LatLng): [number, number] {
-  // Relative position from the origin (classroom) in degrees
-  const latDiff = latlng.lat - CLASSROOM_LATLNG.lat;
-  const lngDiff = latlng.lng - CLASSROOM_LATLNG.lng;
-
-  // Convert difference to cell indices (i, j)
-  const i = Math.floor(latDiff / TILE_DEGREES);
-  const j = Math.floor(lngDiff / TILE_DEGREES);
+  // Use Null Island (0,0) as the global origin so the grid is world-anchored.
+  // Convert absolute lat/lng into cell indices (i, j) relative to (0,0).
+  const i = Math.floor(latlng.lat / TILE_DEGREES);
+  const j = Math.floor(latlng.lng / TILE_DEGREES);
 
   return [i, j];
 }
@@ -137,10 +134,11 @@ function getCellId(latlng: LatLng): [number, number] {
  * @returns A LatLngBounds object for the cell.
  */
 function getCellBounds(i: number, j: number): leaflet.LatLngBounds {
-  const origin = CLASSROOM_LATLNG;
+  // Bounds are computed relative to Null Island (0,0) so the cell coordinates
+  // map to consistent world positions.
   const bounds = leaflet.latLngBounds([
-    [origin.lat + i * TILE_DEGREES, origin.lng + j * TILE_DEGREES],
-    [origin.lat + (i + 1) * TILE_DEGREES, origin.lng + (j + 1) * TILE_DEGREES],
+    [i * TILE_DEGREES, j * TILE_DEGREES],
+    [(i + 1) * TILE_DEGREES, (j + 1) * TILE_DEGREES],
   ]);
   return bounds;
 }
@@ -295,10 +293,11 @@ function drawGrid() {
   const sw = bounds.getSouthWest();
   const ne = bounds.getNorthEast();
 
-  let minI = Math.floor((sw.lat - CLASSROOM_LATLNG.lat) / TILE_DEGREES);
-  let maxI = Math.floor((ne.lat - CLASSROOM_LATLNG.lat) / TILE_DEGREES);
-  let minJ = Math.floor((sw.lng - CLASSROOM_LATLNG.lng) / TILE_DEGREES);
-  let maxJ = Math.floor((ne.lng - CLASSROOM_LATLNG.lng) / TILE_DEGREES);
+  // Compute i/j ranges directly from absolute lat/lng using Null Island as origin
+  let minI = Math.floor(sw.lat / TILE_DEGREES);
+  let maxI = Math.floor(ne.lat / TILE_DEGREES);
+  let minJ = Math.floor(sw.lng / TILE_DEGREES);
+  let maxJ = Math.floor(ne.lng / TILE_DEGREES);
 
   // Clamp to a safety range around the player to avoid accidental huge loops
   minI = Math.max(minI, iPlayer - SAFETY_RANGE);
