@@ -21,7 +21,7 @@ interface Token {
 
 // Player State
 let playerToken: Token | null = null; // What the player is currently holding
-const WIN_VALUE = 16; // The value required for victory (e.g., 8 or 16)
+const WIN_VALUE = 256; // The value required for victory (e.g., 8 or 16)
 
 // Map Coordinates for the Classroom (origin reference point)
 const _CLASSROOM_LATLNG = leaflet.latLng(
@@ -221,8 +221,13 @@ function updateInventoryDisplay() {
 function handleCellClick(i: number, j: number) {
   const cellKey = `${i},${j}`;
 
-  // Re-evaluate current token for the cell (in case it's changed since draw)
-  const cellToken = cellContents.get(cellKey) ?? null;
+  // [D3.b Memoryless] Get the current token from getInitialCellToken (memoryless cells).
+  // Player-placed tokens are stored in cellContents; initial spawns are always recalculated.
+  let cellToken: Token | null = getInitialCellToken(i, j);
+  // If the cell has been interacted with (in cellContents), use that state instead
+  if (cellContents.has(cellKey)) {
+    cellToken = cellContents.get(cellKey) ?? null;
+  }
 
   // Player's cell index
   const playerCell = getCellId(playerLatLng);
@@ -294,10 +299,25 @@ function drawGrid() {
   const minJ = jPlayer - VISIBLE_RANGE;
   const maxJ = jPlayer + VISIBLE_RANGE;
 
+  // [D3.b Farming Glitch] Clear cellContents for cells outside VISIBLE_RANGE
+  // so they reset when they leave view. This enables the intentional farming mechanic.
+  for (const key of cellContents.keys()) {
+    const [i, j] = key.split(",").map(Number);
+    if (i < minI || i > maxI || j < minJ || j > maxJ) {
+      cellContents.delete(key);
+    }
+  }
+
   for (let i = minI; i <= maxI; i++) {
     for (let j = minJ; j <= maxJ; j++) {
-      // [D3.b Memoryless] Only check getInitialCellToken.
-      const token: Token | null = getInitialCellToken(i, j);
+      // [D3.b Memoryless] Get initial token from deterministic spawn.
+      // Also check for player-placed/crafted tokens stored in cellContents.
+      let token: Token | null = getInitialCellToken(i, j);
+      const cellKey = `${i},${j}`;
+      // If the cell has been interacted with (in cellContents), use that state instead
+      if (cellContents.has(cellKey)) {
+        token = cellContents.get(cellKey) ?? null;
+      }
 
       const bounds = getCellBounds(i, j);
       const rect = leaflet.rectangle(bounds);

@@ -76,8 +76,8 @@ Key gameplay challenge: Can players craft an even higher value token by moving t
 - [x] Modify `handleCellClick` to calculate the proximity check based on the current cell of `playerLatLng` (`iPlayer`, `jPlayer`). The range check should be relative to the player's _new_ position.
 
 - **Gameplay Progression**
-- [ ] Increase `WIN_VALUE` (e.g., from 16 to 64 or 128) to require movement and farming to achieve victory.
-- [ ] Test the farming exploit: confirm the player can move out of range, move back, and see a freshly spawned token in a cell they previously emptied.
+- [x] Increase `WIN_VALUE` (e.g., from 16 to 64 or 128) to require movement and farming to achieve victory.
+- [x] Test the farming exploit: confirm the player can move out of range, move back, and see a freshly spawned token in a cell they previously emptied.
 
 - **Polish & Finalization**
 - [ ] Do a final code review and cleanup (preparing for a cleanup-only commit).
