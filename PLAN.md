@@ -80,8 +80,8 @@ Key gameplay challenge: Can players craft an even higher value token by moving t
 - [x] Test the farming exploit: confirm the player can move out of range, move back, and see a freshly spawned token in a cell they previously emptied.
 
 - **Polish & Finalization**
-- [ ] Do a final code review and cleanup (preparing for a cleanup-only commit).
-- [ ] Commit all changes and mark the milestone complete (e.g., `(D3.b complete)`).
+- [x] Do a final code review and cleanup (preparing for a cleanup-only commit).
+- [x] Commit all changes and mark the milestone complete (e.g., `(D3.b complete)`).
 
 ## D3.c Object persistence
 

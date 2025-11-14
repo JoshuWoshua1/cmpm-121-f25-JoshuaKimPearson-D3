@@ -159,7 +159,7 @@ function getInitialCellToken(i: number, j: number): Token | null {
   return null;
 }
 
-// ----------------- GAME STATE FOR D3.a --------------------
+// -----------------GAME STATE --------------------
 
 // Map of cell ID (string 'i,j') to its current Token.
 const cellContents = new Map<string, Token | null>();
@@ -221,7 +221,7 @@ function updateInventoryDisplay() {
 function handleCellClick(i: number, j: number) {
   const cellKey = `${i},${j}`;
 
-  // [D3.b Memoryless] Get the current token from getInitialCellToken (memoryless cells).
+  // Get the current token from getInitialCellToken (memoryless cells).
   // Player-placed tokens are stored in cellContents; initial spawns are always recalculated.
   let cellToken: Token | null = getInitialCellToken(i, j);
   // If the cell has been interacted with (in cellContents), use that state instead
@@ -293,14 +293,14 @@ function drawGrid() {
   const iPlayer = playerCell[0];
   const jPlayer = playerCell[1];
 
-  // [Dynamic Map View] Center the drawing loop around iPlayer and jPlayer using VISIBLE_RANGE
+  // Center the drawing loop around the player using VISIBLE_RANGE
   const minI = iPlayer - VISIBLE_RANGE;
   const maxI = iPlayer + VISIBLE_RANGE;
   const minJ = jPlayer - VISIBLE_RANGE;
   const maxJ = jPlayer + VISIBLE_RANGE;
 
-  // [D3.b Farming Glitch] Clear cellContents for cells outside VISIBLE_RANGE
-  // so they reset when they leave view. This enables the intentional farming mechanic.
+  // Clear cellContents for cells outside VISIBLE_RANGE so they reset when they leave view.
+  // This enables the intentional farming mechanic.
   for (const key of cellContents.keys()) {
     const [i, j] = key.split(",").map(Number);
     if (i < minI || i > maxI || j < minJ || j > maxJ) {
@@ -310,8 +310,7 @@ function drawGrid() {
 
   for (let i = minI; i <= maxI; i++) {
     for (let j = minJ; j <= maxJ; j++) {
-      // [D3.b Memoryless] Get initial token from deterministic spawn.
-      // Also check for player-placed/crafted tokens stored in cellContents.
+      // Get initial token from deterministic spawn or from stored player-placed/crafted tokens.
       let token: Token | null = getInitialCellToken(i, j);
       const cellKey = `${i},${j}`;
       // If the cell has been interacted with (in cellContents), use that state instead
