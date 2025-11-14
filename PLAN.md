@@ -56,10 +56,10 @@ Key gameplay challenge: Can players craft an even higher value token by moving t
 ### D3.b Steps
 
 - **Movement Setup**
-- [ ] Introduce a new state variable (`playerLatLng`) to track the player's true location, initialized to `CLASSROOM_LATLNG`.
-- [ ] Update `playerMarker` and `map.center` to use `playerLatLng` instead of the fixed `CLASSROOM_LATLNG` constant.
-- [ ] Add North, South, East, and West buttons to the `controlPanelDiv` to simulate movement (e.g., move by one `TILE_DEGREES`).
-- [ ] Implement click handlers for movement buttons that update `playerLatLng` and then trigger `drawGrid()` and update the map center.
+- [x] Introduce a new state variable (`playerLatLng`) to track the player's true location, initialized to `CLASSROOM_LATLNG`.
+- [x] Update `playerMarker` and `map.center` to use `playerLatLng` instead of the fixed `CLASSROOM_LATLNG` constant.
+- [x] Add North, South, East, and West buttons to the `controlPanelDiv` to simulate movement (e.g., move by one `TILE_DEGREES`).
+- [x] Implement click handlers for movement buttons that update `playerLatLng` and then trigger `drawGrid()` and update the map center.
 
 - **World-Anchored Coordinates (Null Island)**
 - [ ] Change the basis of coordinate calculations: modify `getCellId` and `getCellBounds` to use **Null Island (0, 0) as the true origin**, rather than `CLASSROOM_LATLNG`.

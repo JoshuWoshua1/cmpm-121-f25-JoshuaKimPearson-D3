@@ -23,8 +23,14 @@ interface Token {
 let playerToken: Token | null = null; // What the player is currently holding
 const WIN_VALUE = 16; // The value required for victory (e.g., 8 or 16)
 
-// Map Coordinates for the Classroom (fixed player location for D3.a)
+// Map Coordinates for the Classroom (origin reference point)
 const CLASSROOM_LATLNG = leaflet.latLng(
+  36.997936938057016,
+  -122.05703507501151,
+);
+
+// Player location (tracked and updatable)
+let playerLatLng = leaflet.latLng(
   36.997936938057016,
   -122.05703507501151,
 );
@@ -44,6 +50,14 @@ controlPanelDiv.innerHTML = `
     <h2>World of Bits</h2>
     <div id="playerInventory">Inventory: Empty</div>
     <div id="gameStatus">Goal: Craft a token of value ${WIN_VALUE}.</div>
+    <div id="movementControls" style="margin-top: 10px;">
+      <button id="btnNorth" style="display: block; margin: 5px auto;">↑ North</button>
+      <div style="text-align: center;">
+        <button id="btnWest" style="margin: 5px 5px;">← West</button>
+        <button id="btnEast" style="margin: 5px 5px;">→ East</button>
+      </div>
+      <button id="btnSouth" style="display: block; margin: 5px auto;">↓ South</button>
+    </div>
 `;
 document.body.append(controlPanelDiv);
 
@@ -55,9 +69,9 @@ const statusPanelDiv = document.createElement("div");
 statusPanelDiv.id = "statusPanel";
 document.body.append(statusPanelDiv);
 
-// Create the map and set fixed view
+// Create the map and set view to player location
 const map = leaflet.map(mapDiv, {
-  center: CLASSROOM_LATLNG,
+  center: playerLatLng,
   zoom: GAMEPLAY_ZOOM_LEVEL,
   minZoom: GAMEPLAY_ZOOM_LEVEL,
   maxZoom: GAMEPLAY_ZOOM_LEVEL,
@@ -74,8 +88,8 @@ leaflet
   })
   .addTo(map);
 
-// Player Marker (fixed location for D3.a)
-const playerMarker = leaflet.marker(CLASSROOM_LATLNG, {
+// Player Marker (tracks player location)
+const playerMarker = leaflet.marker(playerLatLng, {
   icon: leaflet.divIcon({
     className: "player-icon",
     html:
@@ -87,6 +101,17 @@ const playerMarker = leaflet.marker(CLASSROOM_LATLNG, {
 playerMarker.addTo(map);
 
 // ------------ HELPER FUNCTIONS --------------------
+
+/**
+ * Updates the player's position on the map.
+ * @param newLatLng - The new latitude/longitude position.
+ */
+function movePlayer(newLatLng: LatLng) {
+  playerLatLng = newLatLng;
+  playerMarker.setLatLng(newLatLng);
+  map.setView(newLatLng);
+  drawGrid();
+}
 
 /**
  * Converts a LatLng coordinate to the top-left corner of its cell identifier (i, j).
@@ -202,7 +227,7 @@ function handleCellClick(i: number, j: number) {
   const cellToken = cellContents.get(cellKey) ?? null;
 
   // Player's cell index
-  const playerCell = getCellId(CLASSROOM_LATLNG);
+  const playerCell = getCellId(playerLatLng);
   const iPlayer = playerCell[0];
   const jPlayer = playerCell[1];
 
@@ -261,7 +286,7 @@ function drawGrid() {
   // Clear previous grid drawing layers
   gridLayer.clearLayers();
 
-  const playerCell = getCellId(CLASSROOM_LATLNG);
+  const playerCell = getCellId(playerLatLng);
   const iPlayer = playerCell[0];
   const jPlayer = playerCell[1];
 
@@ -351,6 +376,43 @@ updateInventoryDisplay();
 map.on("moveend", () => {
   // This allows the user to see the full "World of Bits" that extends past the initial viewport
   drawGrid();
+});
+
+// Movement button handlers
+document.getElementById("btnNorth")?.addEventListener("click", () => {
+  movePlayer(
+    leaflet.latLng(
+      playerLatLng.lat + TILE_DEGREES,
+      playerLatLng.lng,
+    ),
+  );
+});
+
+document.getElementById("btnSouth")?.addEventListener("click", () => {
+  movePlayer(
+    leaflet.latLng(
+      playerLatLng.lat - TILE_DEGREES,
+      playerLatLng.lng,
+    ),
+  );
+});
+
+document.getElementById("btnEast")?.addEventListener("click", () => {
+  movePlayer(
+    leaflet.latLng(
+      playerLatLng.lat,
+      playerLatLng.lng + TILE_DEGREES,
+    ),
+  );
+});
+
+document.getElementById("btnWest")?.addEventListener("click", () => {
+  movePlayer(
+    leaflet.latLng(
+      playerLatLng.lat,
+      playerLatLng.lng - TILE_DEGREES,
+    ),
+  );
 });
 
 statusPanelDiv.innerHTML =
