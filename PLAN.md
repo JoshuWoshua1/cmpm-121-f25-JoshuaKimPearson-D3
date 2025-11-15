@@ -106,5 +106,5 @@ Key gameplay challenge: Can players rely on cell state persisting across map mov
 - [x] Confirm memory efficiency: `cellContents` should remain small compared to the visible grid.
 
 - **Polish & Finalization**
-- [ ] Do a final code review and cleanup (preparing for a cleanup-only commit).
-- [ ] Commit all changes and mark the milestone complete (e.g., `(D3.c complete)`).
+- [x] Do a final code review and cleanup (preparing for a cleanup-only commit).
+- [x] Commit all changes and mark the milestone complete (e.g., `(D3.c complete)`).

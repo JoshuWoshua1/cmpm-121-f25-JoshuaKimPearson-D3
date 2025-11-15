@@ -69,15 +69,13 @@ const statusPanelDiv = document.createElement("div");
 statusPanelDiv.id = "statusPanel";
 document.body.append(statusPanelDiv);
 
-// Debug panel for observing persistence/flyweight behavior
+// Debug panel placeholder for future debuggers
 const debugPanelDiv = document.createElement("div");
 debugPanelDiv.id = "debugPanel";
 debugPanelDiv.style.cssText =
   "position: absolute; right: 8px; top: 8px; background: rgba(0,0,0,0.6); color: white; padding: 8px; font-size: 12px; border-radius: 6px; z-index: 9999;";
 debugPanelDiv.innerHTML = `
   <div style="margin-bottom:6px; font-weight:600;">Debug</div>
-  <div id="dbgStored">Stored modified cells: 0</div>
-  <div id="dbgVisible">Stored in view: 0</div>
   <button id="dbgToggle" style="margin-top:6px; font-size:11px;">Toggle</button>
 `;
 document.body.append(debugPanelDiv);
@@ -208,47 +206,6 @@ function loadCellMemento(cellKey: string): Token | null | undefined {
   // return a fresh copy so callers don't mutate the stored object
   return stored ? { value: stored.value } : null;
 }
-
-/** Debug helpers **/
-function getStoredCount(): number {
-  return cellContents.size;
-}
-
-function getStoredInViewCount(): number {
-  const playerCell = getCellId(playerLatLng);
-  const iPlayer = playerCell[0];
-  const jPlayer = playerCell[1];
-  const minI = iPlayer - VISIBLE_RANGE;
-  const maxI = iPlayer + VISIBLE_RANGE;
-  const minJ = jPlayer - VISIBLE_RANGE;
-  const maxJ = jPlayer + VISIBLE_RANGE;
-  let count = 0;
-  for (const key of cellContents.keys()) {
-    const [i, j] = key.split(",").map(Number);
-    if (i >= minI && i <= maxI && j >= minJ && j <= maxJ) count++;
-  }
-  return count;
-}
-
-function updateDebugUI() {
-  const storedEl = document.getElementById("dbgStored");
-  const visibleEl = document.getElementById("dbgVisible");
-  if (storedEl) {
-    storedEl.textContent = `Stored modified cells: ${getStoredCount()}`;
-  }
-  if (visibleEl) {
-    visibleEl.textContent = `Stored in view: ${getStoredInViewCount()}`;
-  }
-}
-
-// Toggle visibility
-document.getElementById("dbgToggle")?.addEventListener("click", () => {
-  if (debugPanelDiv.style.opacity === "0.15") {
-    debugPanelDiv.style.opacity = "1";
-  } else {
-    debugPanelDiv.style.opacity = "0.15";
-  }
-});
 
 /**
  * Create or reuse a token label icon for the given value and proximity.
@@ -428,8 +385,6 @@ function drawGrid() {
       });
     }
   }
-  // Update debug UI after drawing the grid
-  updateDebugUI();
 }
 
 // ---------------- INITIALIZATION ---------------------
