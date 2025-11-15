@@ -95,13 +95,13 @@ Key gameplay challenge: Can players rely on cell state persisting across map mov
 - [x] Verify that `cellContents` only contains cells with non-initial tokens or null states (cleared tokens), not every cell on the map.
 
 - **State Persistence (Memento Pattern)**
-- [ ] Modify the cell cleanup logic in `drawGrid()` to preserve player-modified cells outside `VISIBLE_RANGE` instead of deleting them.
-- [ ] Update the rendering logic in `drawGrid()` to restore saved cell state when cells re-enter the visible range.
-- [ ] Ensure crafted tokens and placed tokens persist in `cellContents` even when scrolled off-screen, and are restored when the player returns.
+- [x] Modify the cell cleanup logic in `drawGrid()` to preserve player-modified cells outside `VISIBLE_RANGE` instead of deleting them.
+- [x] Update the rendering logic in `drawGrid()` to restore saved cell state when cells re-enter the visible range.
+- [x] Ensure crafted tokens and placed tokens persist in `cellContents` even when scrolled off-screen, and are restored when the player returns.
 
 - **Testing the Persistence**
-- [ ] Test that a crafted token remains in a cell when the player moves away and returns.
-- [ ] Test that the farming glitch no longer works (cells should NOT reset when out of view).
+- [x] Test that a crafted token remains in a cell when the player moves away and returns.
+- [x] Test that the farming glitch no longer works (cells should NOT reset when out of view).
 - [ ] Verify that `cellContents` map size grows only with interacted cells, not with map size.
 - [ ] Confirm memory efficiency: `cellContents` should remain small compared to the visible grid.
 

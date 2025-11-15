@@ -174,6 +174,29 @@ const iconCache = new Map<string, leaflet.DivIcon>();
 const _SAFETY_RANGE = 200; // maximum number of cells in each direction from player
 
 /**
+ * Memento helpers: serialize and deserialize cell state so modified cells
+ * persist when scrolled off-screen. We store a shallow copy of the token
+ * to avoid accidental shared references.
+ */
+function saveCellMemento(cellKey: string, token: Token | null) {
+  if (token) {
+    // store a fresh object copy
+    cellContents.set(cellKey, { value: token.value });
+  } else {
+    // explicit null indicates the cell was cleared by the player
+    cellContents.set(cellKey, null);
+  }
+}
+
+function loadCellMemento(cellKey: string): Token | null | undefined {
+  if (!cellContents.has(cellKey)) return undefined;
+  const stored = cellContents.get(cellKey);
+  if (stored === null) return null;
+  // return a fresh copy so callers don't mutate the stored object
+  return stored ? { value: stored.value } : null;
+}
+
+/**
  * Create or reuse a token label icon for the given value and proximity.
  */
 function createTokenLabel(value: number, isNearby: boolean): leaflet.DivIcon {
@@ -221,12 +244,12 @@ function updateInventoryDisplay() {
 function handleCellClick(i: number, j: number) {
   const cellKey = `${i},${j}`;
 
-  // Get the current token from getInitialCellToken (memoryless cells).
-  // Player-placed tokens are stored in cellContents; initial spawns are always recalculated.
+  // Get the current token from getInitialCellToken.
+  // If the cell was modified by the player, restore the saved memento.
   let cellToken: Token | null = getInitialCellToken(i, j);
-  // If the cell has been interacted with (in cellContents), use that state instead
-  if (cellContents.has(cellKey)) {
-    cellToken = cellContents.get(cellKey) ?? null;
+  const restored = loadCellMemento(cellKey);
+  if (restored !== undefined) {
+    cellToken = restored;
   }
 
   // Player's cell index
@@ -248,21 +271,21 @@ function handleCellClick(i: number, j: number) {
   if (!playerToken && cellToken) {
     // Player is empty, cell has token -> COLLECT
     playerToken = cellToken;
-    cellContents.set(cellKey, null); // Remove token from cell
+    saveCellMemento(cellKey, null); // Remove token from cell (save cleared state)
     statusPanelDiv.innerHTML =
       `Collected token value ${playerToken.value} from cell ${cellKey}.`;
   } // -------------------- CRAFTING MECHANIC ------------------------
   else if (playerToken && cellToken && playerToken.value === cellToken.value) {
     // Player has token, cell has EQUAL token -> CRAFT
     const newValue = playerToken.value * 2;
-    cellContents.set(cellKey, { value: newValue }); // Place new token in cell
+    saveCellMemento(cellKey, { value: newValue }); // Place new token in cell
     playerToken = null; // Clear player inventory
     statusPanelDiv.innerHTML =
       `Crafted new token value ${newValue} in cell ${cellKey}!`;
   } // -------------------- PLACEMENT (No match, just placing an inventory token) ------------------------
   else if (playerToken && !cellToken) {
     // Player has token, cell is empty -> PLACE (or drop)
-    cellContents.set(cellKey, playerToken);
+    saveCellMemento(cellKey, playerToken);
     playerToken = null;
     statusPanelDiv.innerHTML = `Placed token value ${
       cellContents.get(cellKey)?.value
@@ -304,13 +327,12 @@ function drawGrid() {
 
   for (let i = minI; i <= maxI; i++) {
     for (let j = minJ; j <= maxJ; j++) {
-      // Get initial token from deterministic spawn or from stored player-placed/crafted tokens.
+      // Get initial token from deterministic spawn. If a memento exists for
+      // this cell (i.e., the player modified it previously) restore it.
       let token: Token | null = getInitialCellToken(i, j);
       const cellKey = `${i},${j}`;
-      // If the cell has been interacted with (in cellContents), use that state instead
-      if (cellContents.has(cellKey)) {
-        token = cellContents.get(cellKey) ?? null;
-      }
+      const restored = loadCellMemento(cellKey);
+      if (restored !== undefined) token = restored;
 
       const bounds = getCellBounds(i, j);
       const rect = leaflet.rectangle(bounds);
