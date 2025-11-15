@@ -102,8 +102,8 @@ Key gameplay challenge: Can players rely on cell state persisting across map mov
 - **Testing the Persistence**
 - [x] Test that a crafted token remains in a cell when the player moves away and returns.
 - [x] Test that the farming glitch no longer works (cells should NOT reset when out of view).
-- [ ] Verify that `cellContents` map size grows only with interacted cells, not with map size.
-- [ ] Confirm memory efficiency: `cellContents` should remain small compared to the visible grid.
+- [x] Verify that `cellContents` map size grows only with interacted cells, not with map size.
+- [x] Confirm memory efficiency: `cellContents` should remain small compared to the visible grid.
 
 - **Polish & Finalization**
 - [ ] Do a final code review and cleanup (preparing for a cleanup-only commit).
