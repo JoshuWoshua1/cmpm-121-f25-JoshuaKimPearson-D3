@@ -91,8 +91,8 @@ Key gameplay challenge: Can players rely on cell state persisting across map mov
 ### D3.c Steps
 
 - **Memory Management (Flyweight Pattern)**
-- [ ] Ensure unmodified cells are not stored in memory. Only cells the player has interacted with (collected from, crafted in, or placed tokens into) are stored in `cellContents`.
-- [ ] Verify that `cellContents` only contains cells with non-initial tokens or null states (cleared tokens), not every cell on the map.
+- [x] Ensure unmodified cells are not stored in memory. Only cells the player has interacted with (collected from, crafted in, or placed tokens into) are stored in `cellContents`.
+- [x] Verify that `cellContents` only contains cells with non-initial tokens or null states (cleared tokens), not every cell on the map.
 
 - **State Persistence (Memento Pattern)**
 - [ ] Modify the cell cleanup logic in `drawGrid()` to preserve player-modified cells outside `VISIBLE_RANGE` instead of deleting them.

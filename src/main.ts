@@ -299,14 +299,8 @@ function drawGrid() {
   const minJ = jPlayer - VISIBLE_RANGE;
   const maxJ = jPlayer + VISIBLE_RANGE;
 
-  // Clear cellContents for cells outside VISIBLE_RANGE so they reset when they leave view.
-  // This enables the intentional farming mechanic.
-  for (const key of cellContents.keys()) {
-    const [i, j] = key.split(",").map(Number);
-    if (i < minI || i > maxI || j < minJ || j > maxJ) {
-      cellContents.delete(key);
-    }
-  }
+  // Flyweight Pattern: Only cells that have been interacted with (in cellContents)
+  // are stored in memory. Unmodified cells are computed on-the-fly using getInitialCellToken.
 
   for (let i = minI; i <= maxI; i++) {
     for (let j = minJ; j <= maxJ; j++) {
