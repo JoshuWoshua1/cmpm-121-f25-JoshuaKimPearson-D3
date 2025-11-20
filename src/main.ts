@@ -35,6 +35,111 @@ let playerLatLng = leaflet.latLng(
   -122.05703507501151,
 );
 
+// ---------------- Movement Facade -----------------
+// Create an interface and two implementations to allow swapping
+// button-based movement with geolocation-based movement.
+interface MovementFacade {
+  getPlayerPosition(): LatLng;
+  onPositionChange(cb: (pos: LatLng) => void): void;
+  stop?(): void; // optional for geolocation
+}
+
+class ButtonMovement implements MovementFacade {
+  private pos: LatLng;
+  private listeners: Array<(pos: LatLng) => void> = [];
+
+  constructor(initial: LatLng) {
+    this.pos = initial;
+  }
+
+  getPlayerPosition(): LatLng {
+    return this.pos;
+  }
+
+  onPositionChange(cb: (pos: LatLng) => void) {
+    this.listeners.push(cb);
+  }
+
+  // methods specific to button movement (not part of interface)
+  moveBy(deltaLat: number, deltaLng: number) {
+    this.pos = leaflet.latLng(this.pos.lat + deltaLat, this.pos.lng + deltaLng);
+    this.emit();
+  }
+
+  private emit() {
+    for (const cb of this.listeners) cb(this.pos);
+  }
+}
+
+class GeolocationMovement implements MovementFacade {
+  private pos: LatLng;
+  private listeners: Array<(pos: LatLng) => void> = [];
+  private watchId: number | null = null;
+
+  constructor(initial: LatLng) {
+    this.pos = initial;
+  }
+
+  getPlayerPosition(): LatLng {
+    return this.pos;
+  }
+
+  onPositionChange(cb: (pos: LatLng) => void) {
+    this.listeners.push(cb);
+  }
+
+  startWatching(options?: PositionOptions) {
+    if (!navigator.geolocation) return;
+    this.watchId = navigator.geolocation.watchPosition(
+      (p) => {
+        this.pos = leaflet.latLng(p.coords.latitude, p.coords.longitude);
+        for (const cb of this.listeners) cb(this.pos);
+      },
+      (err) => {
+        console.warn("Geolocation error:", err.message);
+      },
+      options,
+    );
+  }
+
+  stop() {
+    if (this.watchId !== null) navigator.geolocation.clearWatch(this.watchId);
+  }
+}
+
+// Default movement (may be swapped at startup)
+let movement: MovementFacade = new ButtonMovement(playerLatLng);
+// If buttons used, we will maintain a concrete ref so the button handlers
+// can call moveBy on it.
+let buttonMovement: ButtonMovement | null = null;
+if (movement instanceof ButtonMovement) {
+  buttonMovement = movement as ButtonMovement;
+}
+
+// When movement changes, call movePlayer and redraw
+movement.onPositionChange((pos) => movePlayer(pos));
+
+// Helper: switch movement mode implementation (Buttons vs Geolocation)
+function setMovementMode(mode: string) {
+  const current = movement;
+  if (current.stop) current.stop();
+  if (mode === "geolocation" && navigator.geolocation) {
+    movement = new GeolocationMovement(current.getPlayerPosition());
+    (movement as GeolocationMovement).startWatching();
+  } else {
+    movement = new ButtonMovement(current.getPlayerPosition());
+  }
+  buttonMovement = movement instanceof ButtonMovement
+    ? (movement as ButtonMovement)
+    : null;
+  movement.onPositionChange((pos) => movePlayer(pos));
+  try {
+    localStorage.setItem("movementMode", mode);
+  } catch (_e) {
+    // ignore localStorage errors
+  }
+}
+
 // Tunable gameplay parameters
 const GAMEPLAY_ZOOM_LEVEL = 19;
 const TILE_DEGREES = 0.0001; // Cell size
@@ -58,6 +163,13 @@ controlPanelDiv.innerHTML = `
       </div>
       <button id="btnSouth" style="display: block; margin: 5px auto;">↓ South</button>
     </div>
+    <div style="margin-top:6px; text-align:center;">
+      <label for="movementMode" style="font-size:12px;">Movement:</label>
+      <select id="movementMode" style="margin-left:6px; font-size:12px;">
+        <option value="buttons">Buttons</option>
+        <option value="geolocation">Geolocation</option>
+      </select>
+    </div>
 `;
 document.body.append(controlPanelDiv);
 
@@ -80,9 +192,26 @@ debugPanelDiv.innerHTML = `
 `;
 document.body.append(debugPanelDiv);
 
+// Movement mode UI wiring: select movement mode by query string or saved preference
+const movementSelect = document.getElementById(
+  "movementMode",
+) as HTMLSelectElement | null;
+function applyInitialMovementMode() {
+  const params = new URLSearchParams(globalThis.location.search);
+  const paramMode = params.get("movement");
+  const mode = paramMode || localStorage.getItem("movementMode") || "buttons";
+  if (movementSelect) movementSelect.value = mode;
+  setMovementMode(mode);
+}
+movementSelect?.addEventListener("change", () => {
+  const mode = movementSelect.value;
+  setMovementMode(mode);
+});
+applyInitialMovementMode();
+
 // Create the map and set view to player location
 const map = leaflet.map(mapDiv, {
-  center: playerLatLng,
+  center: movement.getPlayerPosition(),
   zoom: GAMEPLAY_ZOOM_LEVEL,
   minZoom: GAMEPLAY_ZOOM_LEVEL,
   maxZoom: GAMEPLAY_ZOOM_LEVEL,
@@ -264,7 +393,7 @@ function handleCellClick(i: number, j: number) {
   }
 
   // Player's cell index
-  const playerCell = getCellId(playerLatLng);
+  const playerCell = getCellId(movement.getPlayerPosition());
   const iPlayer = playerCell[0];
   const jPlayer = playerCell[1];
 
@@ -323,7 +452,7 @@ function drawGrid() {
   // Clear previous grid drawing layers
   gridLayer.clearLayers();
 
-  const playerCell = getCellId(playerLatLng);
+  const playerCell = getCellId(movement.getPlayerPosition());
   const iPlayer = playerCell[0];
   const jPlayer = playerCell[1];
 
@@ -401,39 +530,19 @@ map.on("moveend", () => {
 
 // Movement button handlers
 document.getElementById("btnNorth")?.addEventListener("click", () => {
-  movePlayer(
-    leaflet.latLng(
-      playerLatLng.lat + TILE_DEGREES,
-      playerLatLng.lng,
-    ),
-  );
+  if (buttonMovement) buttonMovement.moveBy(TILE_DEGREES, 0);
 });
 
 document.getElementById("btnSouth")?.addEventListener("click", () => {
-  movePlayer(
-    leaflet.latLng(
-      playerLatLng.lat - TILE_DEGREES,
-      playerLatLng.lng,
-    ),
-  );
+  if (buttonMovement) buttonMovement.moveBy(-TILE_DEGREES, 0);
 });
 
 document.getElementById("btnEast")?.addEventListener("click", () => {
-  movePlayer(
-    leaflet.latLng(
-      playerLatLng.lat,
-      playerLatLng.lng + TILE_DEGREES,
-    ),
-  );
+  if (buttonMovement) buttonMovement.moveBy(0, TILE_DEGREES);
 });
 
 document.getElementById("btnWest")?.addEventListener("click", () => {
-  movePlayer(
-    leaflet.latLng(
-      playerLatLng.lat,
-      playerLatLng.lng - TILE_DEGREES,
-    ),
-  );
+  if (buttonMovement) buttonMovement.moveBy(0, -TILE_DEGREES);
 });
 
 statusPanelDiv.innerHTML =

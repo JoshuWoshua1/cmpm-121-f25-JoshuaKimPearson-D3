@@ -117,11 +117,11 @@ Key gameplay challenge: Can players seamlessly move their character in the real 
 ### D3.d Steps
 
 - **Movement Facade Pattern**
-- [ ] Create a `MovementFacade` interface that provides a unified movement API with a single method: `getPlayerPosition(): LatLng` (or similar).
-- [ ] Implement a `ButtonMovement` class that wraps the existing button-based movement system and satisfies the `MovementFacade` interface.
-- [ ] Implement a `GeolocationMovement` class that uses the browser's Geolocation API to track real-world position and satisfies the `MovementFacade` interface.
-- [ ] Update the main game loop to use the `MovementFacade` instead of directly accessing `playerLatLng` for movement.
-- [ ] Add a query string parser or runtime toggle (e.g., `?movement=geolocation` or `?movement=buttons`) to select which movement system to use at startup.
+- [x] Create a `MovementFacade` interface that provides a unified movement API with a single method: `getPlayerPosition(): LatLng` (or similar).
+- [x] Implement a `ButtonMovement` class that wraps the existing button-based movement system and satisfies the `MovementFacade` interface.
+- [x] Implement a `GeolocationMovement` class that uses the browser's Geolocation API to track real-world position and satisfies the `MovementFacade` interface.
+- [x] Update the main game loop to use the `MovementFacade` instead of directly accessing `playerLatLng` for movement.
+- [x] Add a query string parser or runtime toggle (e.g., `?movement=geolocation` or `?movement=buttons`) to select which movement system to use at startup.
 
 - **Geolocation Implementation**
 - [ ] Request permission from the user to access device location (geolocation API).
