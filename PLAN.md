@@ -124,38 +124,38 @@ Key gameplay challenge: Can players seamlessly move their character in the real 
 - [x] Add a query string parser or runtime toggle (e.g., `?movement=geolocation` or `?movement=buttons`) to select which movement system to use at startup.
 
 - **Geolocation Implementation**
-- [ ] Request permission from the user to access device location (geolocation API).
-- [ ] Implement a `watchPosition` callback to continuously update the player's position as they move in the real world.
-- [ ] Handle geolocation errors gracefully (permission denied, timeout, etc.) with user-friendly messages.
-- [ ] Add a visual indicator (e.g., accuracy radius or icon status) to show geolocation status.
+- [x] Request permission from the user to access device location (geolocation API).
+- [x] Implement a `watchPosition` callback to continuously update the player's position as they move in the real world.
+- [x] Handle geolocation errors gracefully (permission denied, timeout, etc.) with user-friendly messages.
+- [x] Add a visual indicator (e.g., accuracy radius or icon status) to show geolocation status.
 
 - **State Persistence (localStorage)**
-- [ ] Create serialization functions to convert game state (`playerToken`, `playerLatLng`, `cellContents`) to JSON.
-- [ ] Create deserialization functions to restore game state from JSON.
-- [ ] Implement an auto-save feature that writes game state to `localStorage` after each game action (collection, crafting, placement, movement).
-- [ ] Implement a load-on-startup feature that restores game state from `localStorage` if available, or starts a new game if not.
-- [ ] Store additional metadata in `localStorage` (e.g., last save timestamp, movement mode used).
+- [x] Create serialization functions to convert game state (`playerToken`, `playerLatLng`, `cellContents`) to JSON.
+- [x] Create deserialization functions to restore game state from JSON.
+- [x] Implement an auto-save feature that writes game state to `localStorage` after each game action (collection, crafting, placement, movement).
+- [x] Implement a load-on-startup feature that restores game state from `localStorage` if available, or starts a new game if not.
+- [x] Store additional metadata in `localStorage` (e.g., last save timestamp, movement mode used).
 
 - **New Game & Game Reset**
-- [ ] Add a "New Game" button to the UI that clears `playerToken`, `cellContents`, and `playerLatLng` (resetting to initial state).
-- [ ] Add a confirmation dialog before starting a new game (to prevent accidental progress loss).
-- [ ] Clear `localStorage` when the player starts a new game.
-- [ ] Update the startup sequence to distinguish between "load saved game" and "start new game" flows.
+- [x] Add a "New Game" button to the UI that clears `playerToken`, `cellContents`, and `playerLatLng` (resetting to initial state).
+- [x] Add a confirmation dialog before starting a new game (to prevent accidental progress loss).
+- [x] Clear `localStorage` when the player starts a new game.
+- [x] Update the startup sequence to distinguish between "load saved game" and "start new game" flows.
 
 - **Movement Mode Selection**
-- [ ] Parse the URL query string (e.g., `index.html?movement=geolocation`) or provide a UI toggle to select movement mode.
-- [ ] Persist the selected movement mode to `localStorage` so the user's preference is remembered.
-- [ ] Ensure both button and geolocation modes work correctly when switching (or restrict switching to startup only, if simpler).
-- [ ] Test both modes thoroughly to ensure consistent gameplay experience.
+- [x] Parse the URL query string (e.g., `index.html?movement=geolocation`) or provide a UI toggle to select movement mode.
+- [x] Persist the selected movement mode to `localStorage` so the user's preference is remembered.
+- [x] Ensure both button and geolocation modes work correctly when switching (or restrict switching to startup only, if simpler).
+- [x] Test both modes thoroughly to ensure consistent gameplay experience.
 
 - **Testing & Validation**
-- [ ] Test that game state persists correctly across page reloads (collect a token, close page, reopen page—token should still be held).
-- [ ] Test that geolocation movement updates player position as the device moves.
-- [ ] Test that the "New Game" flow clears all state and starts fresh.
-- [ ] Test that switching between button and geolocation modes works as expected.
-- [ ] Verify that geolocation permission requests are handled gracefully on all browsers.
-- [ ] Confirm that gameplay experience is consistent between button-based and geolocation-based movement.
+- [x] Test that game state persists correctly across page reloads (collect a token, close page, reopen page—token should still be held).
+- [x] Test that geolocation movement updates player position as the device moves.
+- [x] Test that the "New Game" flow clears all state and starts fresh.
+- [x] Test that switching between button and geolocation modes works as expected.
+- [x] Verify that geolocation permission requests are handled gracefully on all browsers.
+- [x] Confirm that gameplay experience is consistent between button-based and geolocation-based movement.
 
 - **Polish & Finalization**
-- [ ] Do a final code review and cleanup (preparing for a cleanup-only commit).
-- [ ] Commit all changes and mark the milestone complete (e.g., `(D3.d complete)`).
+- [x] Do a final code review and cleanup (preparing for a cleanup-only commit).
+- [x] Commit all changes and mark the milestone complete (e.g., `(D3.d complete)`).

@@ -23,7 +23,7 @@ interface Token {
 let playerToken: Token | null = null; // What the player is currently holding
 const WIN_VALUE = 256; // The value required for victory (e.g., 8 or 16)
 
-// Map Coordinates for the Classroom (origin reference point)
+// Map Coordinates for the Classroom (default spawn location with no geolocation)
 const _CLASSROOM_LATLNG = leaflet.latLng(
   36.997936938057016,
   -122.05703507501151,
@@ -89,16 +89,35 @@ class GeolocationMovement implements MovementFacade {
   }
 
   startWatching(options?: PositionOptions) {
-    if (!navigator.geolocation) return;
+    if (!navigator.geolocation) {
+      statusPanelDiv.innerHTML =
+        "⚠️ Geolocation is not supported by your browser.";
+      return;
+    }
+    statusPanelDiv.innerHTML = "📍 Requesting location permission...";
     this.watchId = navigator.geolocation.watchPosition(
       (p) => {
         this.pos = leaflet.latLng(p.coords.latitude, p.coords.longitude);
+        statusPanelDiv.innerHTML = `📍 Geolocation active (accuracy: ±${
+          Math.round(p.coords.accuracy)
+        }m)`;
         for (const cb of this.listeners) cb(this.pos);
       },
       (err) => {
+        let msg = "⚠️ Geolocation error: ";
+        if (err.code === err.PERMISSION_DENIED) {
+          msg += "Permission denied. Please enable location access.";
+        } else if (err.code === err.TIMEOUT) {
+          msg += "Request timed out. Please check your connection.";
+        } else if (err.code === err.POSITION_UNAVAILABLE) {
+          msg += "Position unavailable. Please check your device settings.";
+        } else {
+          msg += err.message;
+        }
+        statusPanelDiv.innerHTML = msg;
         console.warn("Geolocation error:", err.message);
       },
-      options,
+      options || { enableHighAccuracy: true, maximumAge: 10000, timeout: 5000 },
     );
   }
 
@@ -169,6 +188,9 @@ controlPanelDiv.innerHTML = `
         <option value="buttons">Buttons</option>
         <option value="geolocation">Geolocation</option>
       </select>
+    </div>
+    <div style="margin-top:10px; text-align:center;">
+      <button id="btnNewGame" style="font-size:12px; padding:4px 8px;">🔄 New Game</button>
     </div>
 `;
 document.body.append(controlPanelDiv);
@@ -251,6 +273,7 @@ function movePlayer(newLatLng: LatLng) {
   playerMarker.setLatLng(newLatLng);
   map.setView(newLatLng);
   drawGrid();
+  saveGameState();
 }
 
 /**
@@ -306,6 +329,73 @@ const cellContents = new Map<string, Token | null>();
 
 // A single layer group for drawing the grid (so we can clear/redraw easily)
 const gridLayer = leaflet.layerGroup().addTo(map);
+
+// ---------------- STATE PERSISTENCE (localStorage) ----------------
+
+interface GameState {
+  playerToken: Token | null;
+  playerLatLng: { lat: number; lng: number };
+  cellContents: Array<[string, Token | null]>;
+  movementMode: string;
+  timestamp: number;
+}
+
+function saveGameState() {
+  try {
+    const state: GameState = {
+      playerToken: playerToken,
+      playerLatLng: { lat: playerLatLng.lat, lng: playerLatLng.lng },
+      cellContents: Array.from(cellContents.entries()),
+      movementMode: movementSelect?.value || "buttons",
+      timestamp: Date.now(),
+    };
+    localStorage.setItem("gameState", JSON.stringify(state));
+  } catch (e) {
+    console.warn("Failed to save game state:", e);
+  }
+}
+
+function loadGameState(): boolean {
+  try {
+    const saved = localStorage.getItem("gameState");
+    if (!saved) return false;
+
+    const state: GameState = JSON.parse(saved);
+
+    // Restore player token
+    playerToken = state.playerToken;
+
+    // Restore player position
+    playerLatLng = leaflet.latLng(
+      state.playerLatLng.lat,
+      state.playerLatLng.lng,
+    );
+
+    // Restore cell contents
+    cellContents.clear();
+    for (const [key, token] of state.cellContents) {
+      cellContents.set(key, token);
+    }
+
+    // Restore movement mode if available
+    if (state.movementMode && movementSelect) {
+      movementSelect.value = state.movementMode;
+    }
+
+    return true;
+  } catch (e) {
+    console.warn("Failed to load game state:", e);
+    return false;
+  }
+}
+
+function clearGameState() {
+  try {
+    localStorage.removeItem("gameState");
+  } catch (e) {
+    console.warn("Failed to clear game state:", e);
+  }
+}
 
 // Cache for token label icons to avoid recreating DOM nodes on each redraw
 const iconCache = new Map<string, leaflet.DivIcon>();
@@ -440,6 +530,7 @@ function handleCellClick(i: number, j: number) {
   // Redraw everything after state change
   updateInventoryDisplay();
   drawGrid();
+  saveGameState();
 }
 
 /**
@@ -518,6 +609,17 @@ function drawGrid() {
 
 // ---------------- INITIALIZATION ---------------------
 
+// Load saved game state if available
+const stateLoaded = loadGameState();
+if (stateLoaded) {
+  // Update movement facade with loaded position
+  if (movement instanceof ButtonMovement) {
+    (movement as ButtonMovement).moveBy(0, 0); // trigger position update
+  }
+  playerMarker.setLatLng(playerLatLng);
+  map.setView(playerLatLng);
+}
+
 // Initial Draw
 drawGrid();
 updateInventoryDisplay();
@@ -545,5 +647,53 @@ document.getElementById("btnWest")?.addEventListener("click", () => {
   if (buttonMovement) buttonMovement.moveBy(0, -TILE_DEGREES);
 });
 
-statusPanelDiv.innerHTML =
-  "Welcome to the World of Bits! Start collecting tokens of value 1 near you.";
+// New Game button handler
+document.getElementById("btnNewGame")?.addEventListener("click", () => {
+  const confirmed = confirm(
+    "Are you sure you want to start a new game? This will reset all progress.",
+  );
+  if (confirmed) {
+    // Reset game state
+    playerToken = null;
+    const resetPosition = leaflet.latLng(
+      _CLASSROOM_LATLNG.lat,
+      _CLASSROOM_LATLNG.lng,
+    );
+    playerLatLng = resetPosition;
+    cellContents.clear();
+
+    // Clear localStorage
+    clearGameState();
+
+    // Reset movement facade to the classroom position
+    const currentMode = movementSelect?.value || "buttons";
+    if (movement.stop) movement.stop();
+
+    if (currentMode === "geolocation" && navigator.geolocation) {
+      movement = new GeolocationMovement(resetPosition);
+      (movement as GeolocationMovement).startWatching();
+      buttonMovement = null;
+    } else {
+      movement = new ButtonMovement(resetPosition);
+      buttonMovement = movement as ButtonMovement;
+    }
+    movement.onPositionChange((pos) => movePlayer(pos));
+
+    // Reset UI and map
+    playerMarker.setLatLng(resetPosition);
+    map.setView(resetPosition);
+    updateInventoryDisplay();
+    drawGrid();
+
+    // Reset game status
+    document.getElementById("gameStatus")!.innerHTML =
+      `Goal: Craft a token of value ${WIN_VALUE}.`;
+    document.getElementById("gameStatus")!.classList.remove("win");
+    statusPanelDiv.innerHTML =
+      "New game started! Start collecting tokens of value 1 near you.";
+  }
+});
+
+statusPanelDiv.innerHTML = stateLoaded
+  ? "Game loaded! Continue your progress."
+  : "Welcome to the World of Bits! Start collecting tokens of value 1 near you.";
